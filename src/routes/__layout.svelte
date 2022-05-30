@@ -1,7 +1,10 @@
 <script lang="ts">
+    import Progress from "$lib/progress/Progress.svelte";
     import Header from "$lib/header/Header.svelte";
     import "../app.css";
 </script>
+
+<Progress />
 
 <Header />
 
