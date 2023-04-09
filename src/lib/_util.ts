@@ -8,7 +8,3 @@ export function timeCalc(timestamp: number): string {
 		.toString()
 		.padStart(2, '0')}`;
 }
-
-export function hashSplitter(hash: string): string[] {
-	return hash.split(',').slice(0, -1);
-}

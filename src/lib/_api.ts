@@ -1,13 +1,15 @@
-const apiURL = 'https://api.dongmini.net/';
+const apiURL = 'https://api.dongmins.com/';
 
 export interface Post {
 	id: string;
 	datetime: number;
-	hashs: string;
+	tags: string[];
 	views: number;
 	title: string;
 	description: string;
+	published: boolean;
 }
+
 export interface Comment {
 	key: string;
 	id: string;
@@ -21,30 +23,37 @@ export interface Comment {
 	content: string;
 }
 
+export interface Visit {
+	[key: string]: {
+		visit: number;
+		uniqueVisitor: number;
+	};
+}
+
 export async function commentGET(key: string) {
 	const response = await fetch(apiURL + `comment/${key}`);
 	const json = await response.json();
-	const items: Comment[] = json.Items.sort((a: Comment, b: Comment) => b.datetime - a.datetime);
+	const items: Comment[] = json.sort((a: Comment, b: Comment) => b.datetime - a.datetime);
 	return items;
 }
 
 export async function commentPOST(
 	key: string,
 	content: string,
-	mbti: string = 'MBTI',
-	name: string = '',
-	email: string = '',
+	mbti = 'MBTI',
+	name = '',
+	email = '',
 	password: string
 ) {
 	const headers = new Headers({
 		'Content-Type': 'application/json'
 	});
 	const raw = JSON.stringify({
-		mbti: mbti,
-		name: name,
-		email: email,
-		content: content,
-		password: password
+		mbti,
+		name,
+		email,
+		content,
+		password
 	});
 	const requestOptions: RequestInit = {
 		method: 'POST',
@@ -68,95 +77,24 @@ export async function commentDELETE(key: string, id: string, password: string) {
 	}
 }
 
-export async function postGET(id: string) {
-	const response = await fetch(apiURL + `post/${id}`);
-	const json = await response.json();
-	const item: Post = json.Item;
+export async function postSCAN() {
+	const response = await fetch(apiURL + 'post');
+	const items: Post[] = await response.json();
+	return items.sort((a, b) => b.datetime - a.datetime);
+}
+
+export async function postGET(postid: string) {
+	const response = await fetch(apiURL + `post/${postid}`);
+	const item: Post = await response.json();
 	return item;
 }
 
-export async function postSCAN(page: number = 1, tag: string = '', fullscan: boolean = false) {
-	// postSCAN(1, "tag,list,man")
-	const response = await fetch(apiURL + 'post');
-	const json = await response.json();
-	const items: Post[] = json.Items.sort((a: Post, b: Post) => b.datetime - a.datetime);
-	if (fullscan) {
-		return items;
-	}
-	const pageCount = 10;
-	if (tag === '') {
-		items.sort((a, b) => b.datetime - a.datetime);
-		return items.slice((page - 1) * pageCount, page * pageCount);
-	} else {
-		const tagList: string[] = tag.split(',').map((elem) => elem + ',');
-		let result: Post[] = items.filter((elem) => {
-			let flag = true;
-			for (let t of tagList) {
-				if (!elem.hashs.includes(t)) {
-					flag = false;
-				}
-			}
-			return flag;
-		});
-		result.sort((a, b) => b.datetime - a.datetime);
-		return result.slice((page - 1) * pageCount, page * pageCount);
-	}
+export function visitPOST(postid: string) {
+	fetch(apiURL + `visit/${postid}`);
 }
 
-export async function postLENGTH(tag: string = '') {
-	const response = await fetch(apiURL + 'post');
-	const json = await response.json();
-	const items: Post[] = json.Items;
-	if (tag === '') {
-		return items.length;
-	} else {
-		const tagList: string[] = tag.split(',').map((elem) => elem + ',');
-		let result: Post[] = items.filter((elem) => {
-			let flag = true;
-			for (let t of tagList) {
-				if (!elem.hashs.includes(t)) {
-					flag = false;
-				}
-			}
-			return flag;
-		});
-		return result.length;
-	}
-}
-
-export interface HashCount {
-	[tag: string]: number;
-}
-
-export async function hashmapGET(tag: string = '') {
-	const posts = await postSCAN(undefined, undefined, true);
-	let count: HashCount = {};
-	let hashs: string[] = [];
-	if (tag === '') {
-		for (let p of posts) {
-			hashs = p.hashs.slice(0, -1).split(',');
-			for (let h of hashs) {
-				count[h] = count[h] + 1 || 1;
-			}
-		}
-	} else {
-		const tagList: string[] = tag.split(',').map((elem) => elem + ',');
-		for (let p of posts.filter((elem) => {
-			let flag = true;
-			for (let t of tagList) {
-				if (!elem.hashs.includes(t)) {
-					flag = false;
-				}
-			}
-			return flag;
-		})) {
-			hashs = p.hashs.slice(0, -1).split(',');
-			for (let h of hashs) {
-				if (!tagList.includes(h + ',')) {
-					count[h] = count[h] + 1 || 1;
-				}
-			}
-		}
-	}
-	return count;
+export async function visitGET() {
+	const response = await fetch(apiURL + 'visit');
+	const items: Visit = await response.json();
+	return items;
 }

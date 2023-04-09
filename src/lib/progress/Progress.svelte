@@ -2,19 +2,19 @@
 	import { navigating } from '$app/stores';
 	import { scale } from 'svelte/transition';
 
-	let level: number = 0;
-	let tick: number = 0;
-	let timerID: NodeJS.Timeout;
+	let level = 0;
+	let tick = 0;
+	let timerID: number;
 
 	function sigmoid(num: number) {
-		const e = 2.7182818284590452353602874;
+		const e = 2.718281828;
 		return (1 / (1 + e ** (-num + 4))) * 100;
 	}
 
-	const t_out = (node: HTMLElement, { duration }) => {
+	const t_out = (node: HTMLElement, { duration }: { duration: number }) => {
 		return {
 			duration,
-			css: (t) => {
+			css: (t: number) => {
 				return `
                     width: ${(level + level - 200) * t + 200 - level}%;
                     filter: blur(${t > 0.5 ? 0 : (0.5 - t) * 10}px);

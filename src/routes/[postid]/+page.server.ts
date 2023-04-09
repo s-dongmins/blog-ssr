@@ -1,21 +1,20 @@
-import type { RequestHandler } from '@sveltejs/kit';
-import { postGET, commentGET, commentPOST } from '$lib/_api';
+import { postGET, commentGET, commentPOST, visitGET } from '$lib/_api';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load = (async ({ params }) => {
 	const responsePost = await postGET(params.postid);
 	const responseComments = await commentGET(params.postid);
+	const responseVisit = (await visitGET())[params.postid].visit;
 	const postHTML = await (
-		await fetch(
-			`https://dongminiblog.s3.ap-northeast-2.amazonaws.com/${params.postid}/content.html`
-		)
+		await fetch(`http://bucket.dongmins.com/${params.postid}/content.html`)
 	).text();
 	return {
 		post: responsePost,
 		comments: responseComments,
-		postHTML: postHTML
+		postHTML: postHTML,
+		visit: responseVisit
 	};
-};
+}) satisfies PageServerLoad;
 
 export const actions: Actions = {
 	default: async ({ request }) => {
